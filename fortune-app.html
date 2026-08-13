@@ -2537,6 +2537,24 @@ function generateMonthlyForecast(natalPositions, asc, info) {
 }
 
 // ==================== AI INTERPRETATION (DeepSeek proxy) ====================
+// 去掉 AI 返回文本里的 Markdown 标记（**、##、`、* 等），保留段落换行
+function cleanMarkdown(text) {
+  if (!text) return text;
+  return text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')          // [文字](链接) → 文字
+    .replace(/\*\*([^*]+)\*\*/g, '$1')                // **加粗** → 加粗
+    .replace(/(^|\n)#{1,6}\s*/g, '$1')                // 行首 # 标题 → 去掉
+    .replace(/`([^`]+)`/g, '$1')                      // `代码` → 代码
+    .replace(/\*([^*]+)\*/g, '$1')                    // *斜体* → 斜体
+    .replace(/^[-*+]\s+/gm, '\u2022 ')                // 无序列表 → • 
+    .replace(/^\d+[.)]\s+/gm, '')                     // 有序列表序号 → 去掉
+    .replace(/^>\s*/gm, '')                           // 引用 > → 去掉
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')         // 图片 ![alt](url) → alt
+    .replace(/~~([^~]+)~~/g, '$1')                    // ~~删除线~~ → 删除线
+    .replace(/^---+\s*$/gm, '')                       // 分隔线 --- → 去掉
+    .replace(/\n{3,}/g, '\n\n');                      // 压缩多余空行
+}
+
 async function callAI(prompt, system, boxEl, btn) {
   boxEl.innerHTML = `<div class="ai-loading"><span class="dot-spin"></span>${t('aiLoading')}</div>`;
   if (btn) { btn.disabled = true; }
@@ -2555,7 +2573,7 @@ async function callAI(prompt, system, boxEl, btn) {
     const data = await resp.json();
     const box = document.createElement('div');
     box.className = 'ai-result';
-    box.textContent = data.text || '';
+    box.textContent = cleanMarkdown(data.text || '');
     boxEl.innerHTML = '';
     boxEl.appendChild(box);
   } catch (err) {
