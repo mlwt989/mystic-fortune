@@ -1439,6 +1439,7 @@ function generateHoroscope() {
   }
 
   const birthDate = new Date(info.date + 'T00:00:00');
+  const sign = getZodiacSign(birthDate);
   const signIdx = getZodiacIndex(birthDate);
   const now = new Date();
   // 今日运势 = 由「生日星座 + 今天日期」唯一决定，同一天永远一样，不再随机换签
